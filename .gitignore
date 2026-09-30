@@ -6,3 +6,4 @@ frontend/node_modules/
 frontend/dist/
 # client plan files contain personal data; keep them out of git
 *-plan.json
+backend/.cache/

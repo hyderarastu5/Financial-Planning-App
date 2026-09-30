@@ -7,7 +7,7 @@ Order of events within each projected year:
   4. If salary, other income and RMDs don't cover costs plus taxes, the rest is
      withdrawn at the start of the year in this order: taxable accounts,
      traditional accounts, HSAs (from age 65), Roth accounts. The amount is
-     solved so that what's left after income tax, payroll tax and penalties
+     solved (regula falsi) so that what's left after income tax, payroll tax and penalties
      exactly covers the costs.
   5. Each account grows by its expected return.
   6. Contributions are added at the end of the year. In retirement, leftover
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from . import tax
 from .models import Account, AccountType, GoalResult, Plan, Projection, Summary, YearRow
@@ -100,7 +100,43 @@ def _plan_withdrawal(pools: List[List[_AccountState]], amount: float, age: int) 
     return w
 
 
-def project(plan: Plan, start_year: Optional[int] = None) -> Projection:
+def _solve_withdrawal(net_cash, net_at_zero: float, available: float, net_at_available: float) -> float:
+    """Smallest withdrawal leaving non-negative cash (to within half a cent).
+
+    net_cash(x) rises with x and is piecewise linear (one piece per tax bracket
+    and account pool), so regula falsi (Illinois variant) usually lands on the
+    answer in a handful of steps; the bracket [lo, hi] keeps it safe.
+    """
+    lo, f_lo, hi, f_hi = 0.0, net_at_zero, available, net_at_available
+    true_f_hi = f_hi  # f_hi may be halved below; this is the real cash left at hi
+    side = 0
+    for _ in range(100):
+        if true_f_hi < 0.005:
+            break
+        x = hi - f_hi * (hi - lo) / (f_hi - f_lo)
+        if not lo < x < hi:
+            x = (lo + hi) / 2
+        f = net_cash(x)
+        if f >= 0:
+            hi, f_hi, true_f_hi = x, f, f
+            if side == 1:
+                f_lo /= 2  # Illinois: stop the far end from sticking
+            side = 1
+        else:
+            lo, f_lo = x, f
+            if side == -1:
+                f_hi /= 2
+            side = -1
+        if hi - lo < 1e-6:
+            break
+    return hi
+
+
+def project(plan: Plan, start_year: Optional[int] = None,
+            returns: Optional[Dict[str, Sequence[float]]] = None) -> Projection:
+    """Project the plan. `returns` optionally overrides each account's expected
+    return year by year (account id -> one return per projected year); the
+    Monte Carlo simulation uses it to replay random market paths."""
     start_year = start_year or date.today().year
     client = plan.client
     status = client.filing_status
@@ -210,14 +246,7 @@ def project(plan: Plan, start_year: Optional[int] = None) -> Projection:
             if net_all < 0:
                 amount = available
             else:
-                lo, hi = 0.0, available
-                for _ in range(60):
-                    mid = (lo + hi) / 2
-                    if after_tax_cash(mid)[0] >= 0:
-                        hi = mid
-                    else:
-                        lo = mid
-                amount = hi
+                amount = _solve_withdrawal(lambda x: after_tax_cash(x)[0], net, available, net_all)
             net, w, income_tax = after_tax_cash(amount)
 
         shortfall = max(0.0, -net)
@@ -243,7 +272,8 @@ def project(plan: Plan, start_year: Optional[int] = None) -> Projection:
 
         # 5. Growth, then 6. end-of-year contributions and reinvestment.
         for s in states:
-            s.balance *= 1 + s.spec.expected_return
+            growth = returns[s.spec.id][t] if returns and s.spec.id in returns else s.spec.expected_return
+            s.balance *= 1 + growth
         for acct_id, amt in contributions.items():
             s = by_id[acct_id]
             s.balance += amt

@@ -13,7 +13,8 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-PLAN_FILE_VERSION = 2  # 2: filing status, healthcare, cost basis, income streams, goals
+# 2: filing status, healthcare, cost basis, income streams, goals. 3: holdings, volatility
+PLAN_FILE_VERSION = 3
 
 
 class AccountType(str, Enum):
@@ -52,6 +53,14 @@ class Spending(BaseModel):
     healthcare_inflation: float = Field(default=0.05, ge=-0.1, le=0.3)
 
 
+class Holding(BaseModel):
+    ticker: str = Field(min_length=1, max_length=15)
+    shares: float = Field(ge=0)
+
+
+DEFAULT_VOLATILITY = 0.15  # roughly a stock-heavy portfolio
+
+
 class Account(BaseModel):
     id: str
     name: str
@@ -64,6 +73,9 @@ class Account(BaseModel):
     # Taxable: cost basis. Roth: total contributions so far (withdrawn tax-free first).
     # None means the whole current balance is basis.
     cost_basis: Optional[float] = Field(default=None, ge=0)
+    # Year-to-year swing in returns (standard deviation), used by the Monte Carlo simulation.
+    volatility: Optional[float] = Field(default=None, ge=0, le=1)  # None: DEFAULT_VOLATILITY
+    holdings: List[Holding] = []  # optional; used to look up live prices and history
 
     @model_validator(mode="after")
     def _start_before_stop(self) -> "Account":
@@ -171,3 +183,63 @@ class Summary(BaseModel):
 class Projection(BaseModel):
     summary: Summary
     years: List[YearRow]
+
+
+# --- Market data ---------------------------------------------------------------------------
+
+class HoldingAnalysis(BaseModel):
+    ticker: str
+    name: str
+    kind: str
+    shares: float
+    price: float
+    value: float
+    weight: float  # share of the account's value
+    annual_return: Optional[float]  # compound annual growth over the history available
+    volatility: Optional[float]
+    years_of_data: Optional[float]
+    asset_classes: dict
+    error: Optional[str] = None  # set when this ticker couldn't be looked up
+
+
+class AccountAnalysis(BaseModel):
+    value: float
+    holdings: List[HoldingAnalysis]
+    # Whole-account figures over the months every holding has data for.
+    annual_return: Optional[float]
+    volatility: Optional[float]
+    years_of_data: Optional[float]
+    asset_classes: dict  # stock / bond / cash / other -> share
+    sectors: dict
+
+
+# --- Monte Carlo -----------------------------------------------------------------------------
+
+class SimulationRequest(BaseModel):
+    plan: Plan
+    runs: int = Field(default=1000, ge=50, le=5000)
+    seed: Optional[int] = None
+
+
+class GoalProbability(BaseModel):
+    id: str
+    name: str
+    probability: float  # share of runs where the goal is fully funded
+
+
+class Band(BaseModel):
+    """Total balance across runs at one age, in today's dollars."""
+
+    age: int
+    p10: float
+    p25: float
+    p50: float
+    p75: float
+    p90: float
+
+
+class Simulation(BaseModel):
+    runs: int
+    success_probability: float  # share of runs where the money lasts to life expectancy
+    goals: List[GoalProbability]
+    bands: List[Band]
