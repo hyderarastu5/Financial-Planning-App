@@ -189,3 +189,21 @@ td.neg { color: var(--bad); }
   .topbar { padding: 10px 16px; }
 }
 .stale { opacity: 0.45; pointer-events: none; }
+.field.checkbox { flex-direction: row; align-items: center; gap: 8px; align-self: end; padding-bottom: 8px; font-size: 13px; }
+
+/* Goals */
+:root { --warn: #b76e00; }
+@media (prefers-color-scheme: dark) { :root { --warn: #f0b429; } }
+.goals { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 14px; }
+.goals li { display: flex; flex-direction: column; gap: 6px; }
+.goal-row { display: flex; justify-content: space-between; gap: 12px; }
+.goal-name { font-weight: 600; }
+.goal-status { font-size: 12px; font-weight: 600; }
+.goal-status.good { color: var(--good); }
+.goal-status.warn { color: var(--warn); }
+.goal-status.bad { color: var(--bad); }
+.bar { height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; }
+.bar span { display: block; height: 100%; border-radius: 3px; }
+.bar span.good { background: var(--good); }
+.bar span.warn { background: var(--warn); }
+.bar span.bad { background: var(--bad); }

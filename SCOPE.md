@@ -55,6 +55,7 @@ Status: **draft — not final.** Edit freely.
 - Year-by-year projection from today to life expectancy: balances by account, income, spending, taxes
 - Charts: net worth over time, account balances, income vs. spending in retirement
 - Goal check: is each goal funded, and when
+- Goal probability: how likely each goal is to be funded, from Monte Carlo simulation
 - Asset allocation of current holdings (stocks / bonds / cash / sectors), from live data
 - Answer to "does the money last?" — the age when assets run out, if they do
 
@@ -77,7 +78,7 @@ Status: **draft — not final.** Edit freely.
 - Year-by-year projection and growth chart
 - Save / load / share a client plan as a JSON file
 
-**Phase 2 — real planning**
+**Phase 2 — real planning** ✅ done
 - Account tax types and correct federal tax on contributions and withdrawals
 - Retirement income sources (Social Security, pension, annuities, business income)
 - Goals as cash flows, with contributions' start/stop years
@@ -88,11 +89,11 @@ Status: **draft — not final.** Edit freely.
 - Historical returns to suggest expected growth rates
 - Asset allocation breakdown
 - Caching so repeated lookups don't hit Yahoo each time
+- Monte Carlo simulation using each fund's historical volatility: probability the plan succeeds and each goal is funded (e.g. "College: 87% likely")
 
 **Phase 4 — advanced**
 - State taxes, mortgage/financing calculator, debts, inheritance
 - Roth vs. Traditional comparison, Roth conversions
-- Monte Carlo (probability the plan succeeds under varied market returns)
 - Printable/PDF client report
 - Optional password-protected (encrypted) client files
 

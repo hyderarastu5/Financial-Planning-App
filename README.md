@@ -33,18 +33,28 @@ Run the engine tests with `cd backend && .venv/bin/pytest`.
 | Dashboard | `frontend/src` | React + TypeScript, charts with Recharts |
 | Tests | `backend/tests` | Engine checked against closed-form formulas (compound growth, annuity future value) |
 
-### Projection rules (Phase 1)
+### Projection rules
 
 Each year, in order:
-1. In retirement, that year's spending is withdrawn from the accounts at the start
-   of the year, proportionally to each account's balance.
-2. Each account grows by its expected return.
-3. Contributions are added at the end of the year (by default from this year
-   until the year before retirement).
+1. Costs: living expenses, healthcare, goals and contributions.
+2. Tax-free money first: 529s pay college goals, HSAs pay healthcare.
+3. Required minimum distributions come out of traditional accounts (from 73 or
+   75, depending on birth year, using the IRS Uniform Lifetime Table).
+4. Anything salary, other income and RMDs don't cover is withdrawn in this order:
+   taxable, traditional, HSA (65+), Roth. The withdrawal is solved (bisection)
+   so that after federal income tax, payroll tax and early-withdrawal penalties,
+   exactly enough is left to pay the year's costs.
+5. Accounts grow by their expected return.
+6. Contributions are added at year end; leftover cash in retirement is
+   reinvested in the first taxable account.
 
-Spending and income are in future (nominal) dollars; "today's dollars" divides by
-cumulative inflation. Taxes, Social Security and other retirement income are
-Phase 2.
+Taxes (`backend/app/tax.py`) use 2026 IRS figures, indexed by the plan's
+inflation rate in later years: ordinary brackets, standard and 65+ deductions,
+the 2025–2028 senior deduction, long-term capital gains stacked on ordinary
+income, net investment income tax, Social Security benefit taxation, payroll
+tax, and the 10% early-withdrawal penalty. Roth contributions come out tax-free
+before earnings. Not yet modeled: state tax, the Roth 5-year rule,
+self-employment tax, itemized deductions and credits.
 
 ## Client plan files
 

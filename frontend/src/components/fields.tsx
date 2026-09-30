@@ -66,3 +66,36 @@ export function TextField({ label, value, onChange, type = 'text' }: TextFieldPr
     </label>
   )
 }
+
+interface SelectFieldProps<T extends string> {
+  label: string
+  value: T
+  options: Record<T, string>
+  onChange: (value: T) => void
+}
+
+export function SelectField<T extends string>({ label, value, options, onChange }: SelectFieldProps<T>) {
+  return (
+    <label className="field">
+      <span className="field-label">{label}</span>
+      <span className="input-wrap">
+        <select value={value} onChange={(e) => onChange(e.target.value as T)}>
+          {(Object.entries(options) as [T, string][]).map(([v, text]) => (
+            <option key={v} value={v}>
+              {text}
+            </option>
+          ))}
+        </select>
+      </span>
+    </label>
+  )
+}
+
+export function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="field checkbox">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>{label}</span>
+    </label>
+  )
+}

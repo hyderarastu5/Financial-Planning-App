@@ -47,13 +47,51 @@ export function Results({ plan, projection }: Props) {
           </span>
         </div>
         {!firstYear.retired && (
-          <div className={`card ${firstYear.surplus >= 0 ? '' : 'bad'}`}>
-            <span className="card-label">Left over this year</span>
-            <span className="card-value">{money(firstYear.surplus)}</span>
-            <span className="card-sub">income − spending − contributions</span>
+          <div className={`card ${firstYear.shortfall > 0 || firstYear.savings_drawn > 0 ? 'bad' : ''}`}>
+            <span className="card-label">
+              {firstYear.savings_drawn > 0 ? 'Drawing from savings this year' : 'Left over this year'}
+            </span>
+            <span className="card-value">
+              {money(firstYear.savings_drawn > 0 ? firstYear.savings_drawn : firstYear.surplus - firstYear.shortfall)}
+            </span>
+            <span className="card-sub">
+              {firstYear.savings_drawn > 0
+                ? 'costs, contributions and taxes exceed take-home pay'
+                : 'after taxes, spending, goals and contributions'}
+            </span>
           </div>
         )}
+        <div className="card">
+          <span className="card-label">Lifetime taxes</span>
+          <span className="card-value">{money(summary.lifetime_taxes)}</span>
+          <span className="card-sub">federal income + payroll + penalties, future $</span>
+        </div>
       </div>
+
+      {summary.goals.length > 0 && (
+        <div className="panel">
+          <h2>Goals</h2>
+          <ul className="goals">
+            {summary.goals.map((g) => {
+              const pct = Math.round(g.funded_share * 100)
+              const status = pct >= 100 ? 'good' : pct >= 50 ? 'warn' : 'bad'
+              return (
+                <li key={g.id}>
+                  <div className="goal-row">
+                    <span className="goal-name">{g.name}</span>
+                    <span className={`goal-status ${status}`}>{pct >= 100 ? 'Fully funded' : `${pct}% funded`}</span>
+                  </div>
+                  <div className="bar" role="img" aria-label={`${pct}% funded`}>
+                    <span className={status} style={{ width: `${Math.min(100, pct)}%` }} />
+                  </div>
+                  <span className="card-sub">{money(g.total_cost)} total, future $</span>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="note">Assumes steady returns every year. Probability under market ups and downs comes in Phase 3.</p>
+        </div>
+      )}
 
       <div className="panel">
         <div className="panel-head">
@@ -114,8 +152,8 @@ export function Results({ plan, projection }: Props) {
           </ResponsiveContainer>
         </div>
         <p className="note">
-          Not yet included: taxes, Social Security, pensions and other retirement income (Phase 2). Retirement spending
-          is paid entirely from these accounts.
+          Federal taxes only; state tax comes later. Withdrawals come from taxable accounts first, then traditional, then
+          Roth.
         </p>
       </div>
 
@@ -127,10 +165,15 @@ export function Results({ plan, projection }: Props) {
               <tr>
                 <th>Year</th>
                 <th>Age</th>
-                <th>Income</th>
+                <th>Salary</th>
+                <th>Other income</th>
                 <th>Spending</th>
+                <th>Healthcare</th>
+                <th>Goals</th>
                 <th>Contributions</th>
                 <th>Withdrawals</th>
+                <th>RMD</th>
+                <th>Taxes</th>
                 <th>Shortfall</th>
                 <th>Total</th>
               </tr>
@@ -141,9 +184,16 @@ export function Results({ plan, projection }: Props) {
                   <td>{r.year}</td>
                   <td>{r.age}</td>
                   <td>{money(r.income)}</td>
+                  <td>{money(r.other_income)}</td>
                   <td>{money(r.spending)}</td>
+                  <td>{money(r.healthcare)}</td>
+                  <td>{money(r.goals)}</td>
                   <td>{money(r.contributions)}</td>
                   <td>{money(r.withdrawals)}</td>
+                  <td>{money(r.rmd)}</td>
+                  <td title={`Income ${money(r.income_tax)} · payroll ${money(r.payroll_tax)} · penalties ${money(r.penalties)}`}>
+                    {money(r.income_tax + r.payroll_tax + r.penalties)}
+                  </td>
                   <td className={r.shortfall > 0 ? 'neg' : ''}>{money(r.shortfall)}</td>
                   <td>{money(todayDollars ? r.total_today_dollars : r.total)}</td>
                 </tr>

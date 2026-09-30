@@ -19,20 +19,84 @@ export interface Account {
   contribution_start_year: number | null
   contribution_stop_year: number | null
   expected_return: number
+  cost_basis: number | null
 }
+
+export type IncomeKind = 'social_security' | 'pension' | 'annuity' | 'business' | 'rental' | 'other'
+
+export const INCOME_KIND_LABELS: Record<IncomeKind, string> = {
+  social_security: 'Social Security',
+  pension: 'Pension',
+  annuity: 'Annuity',
+  business: 'Business income',
+  rental: 'Rental income',
+  other: 'Other',
+}
+
+export interface IncomeStream {
+  id: string
+  name: string
+  kind: IncomeKind
+  annual_amount: number // today's dollars
+  start_age: number
+  end_age: number | null
+  inflation_adjusted: boolean
+  taxable_share: number
+}
+
+export type GoalCategory =
+  | 'home'
+  | 'college'
+  | 'home_improvement'
+  | 'travel'
+  | 'charity'
+  | 'healthcare'
+  | 'family'
+  | 'other'
+
+export const GOAL_CATEGORY_LABELS: Record<GoalCategory, string> = {
+  home: 'Home purchase',
+  college: 'College (529 pays first)',
+  home_improvement: 'Home improvement',
+  travel: 'Travel',
+  charity: 'Charitable giving',
+  healthcare: 'Healthcare',
+  family: 'Kids / grandkids',
+  other: 'Other',
+}
+
+export interface Goal {
+  id: string
+  name: string
+  category: GoalCategory
+  annual_amount: number // today's dollars, per year
+  start_year: number
+  years: number
+}
+
+export type FilingStatus = 'single' | 'married_joint'
 
 export interface Plan {
   version: number
   client: {
     name: string
     date_of_birth: string // YYYY-MM-DD
+    filing_status: FilingStatus
     state: string
     retirement_age: number
     life_expectancy: number
   }
   income: { annual_income: number; annual_raise: number }
-  spending: { current_annual: number; retirement_annual: number; inflation: number }
+  spending: {
+    current_annual: number
+    retirement_annual: number
+    inflation: number
+    healthcare_annual: number
+    healthcare_inflation: number
+  }
   accounts: Account[]
+  income_streams: IncomeStream[]
+  goals: Goal[]
 }
 
 export interface YearRow {
@@ -40,9 +104,17 @@ export interface YearRow {
   age: number
   retired: boolean
   income: number
+  other_income: number
   spending: number
+  healthcare: number
+  goals: number
   contributions: number
   withdrawals: number
+  savings_drawn: number
+  rmd: number
+  income_tax: number
+  payroll_tax: number
+  penalties: number
   shortfall: number
   surplus: number
   balances: Record<string, number>
@@ -58,6 +130,8 @@ export interface Projection {
     balance_at_retirement_today_dollars: number
     final_balance: number
     depletion_age: number | null
+    lifetime_taxes: number
+    goals: { id: string; name: string; total_cost: number; funded_share: number }[]
   }
   years: YearRow[]
 }
