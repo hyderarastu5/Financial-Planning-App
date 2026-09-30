@@ -21,7 +21,8 @@ backend/.venv/bin/pip install -r backend/requirements.txt
 ./dev.sh
 ```
 
-Run the engine tests with `cd backend && .venv/bin/pytest`.
+Run the tests with `cd backend && .venv/bin/pytest` (engine, taxes, market data, simulation) and
+`cd frontend && npm test` (plan files and encryption).
 
 ## How it's built
 
@@ -30,7 +31,7 @@ Run the engine tests with `cd backend && .venv/bin/pytest`.
 | Finance engine | `backend/app/engine.py` | Year-by-year projection; pure Python, no web code |
 | Data model | `backend/app/models.py` | Plan (input / saved file) and Projection (output), validated with Pydantic |
 | API | `backend/app/main.py` | FastAPI: `POST /api/project` |
-| Dashboard | `frontend/src` | React + TypeScript, charts with Recharts |
+| Dashboard | `frontend/src` | React + TypeScript, charts with Recharts; light and dark themes |
 | Tests | `backend/tests` | Engine checked against closed-form formulas (compound growth, annuity future value) |
 
 ### Projection rules
@@ -89,8 +90,26 @@ and credits.
 | `POST /api/compare` | Side-by-side scenario comparison |
 | `POST /api/holdings/analyze` | Live value, returns and allocation for a list of holdings |
 
+## Using the app
+
+- **Sidebar:** the client, then sections for income and spending, accounts (with
+  holdings and live price lookup), other income, goals (optionally financed),
+  debts, one-time money, and taxes and strategy (state, filing status, where
+  leftover cash goes, Roth conversions). Results update as you type.
+- **Dashboard:** chance the money lasts (1,000 simulated markets), balance at
+  retirement, this year's cash flow and lifetime taxes; the range of outcomes,
+  balances by account or a year-by-year table; each goal's likelihood; key
+  figures; and a strategy check comparing Roth vs. pre-tax contributions or
+  Roth conversions on after-tax wealth.
+- **Download report** opens the print dialog with a report layout; choose
+  "Save as PDF".
+- **Theme:** follows the system setting; the sun/moon button switches it and
+  remembers the choice.
+
 ## Client plan files
 
-**Save plan** downloads the current client as a `.json` file; **Open…** loads one
-back. Files ending in `-plan.json` are git-ignored so client data never ends up
-in the repository. Use fictional clients for practice.
+**Save plan** downloads the current client as a `.json` file, optionally
+password-protected (AES-GCM, key from PBKDF2-SHA256; there is no way to recover
+a forgotten password). **Open plan** loads one back, asking for the password if
+needed. Files ending in `-plan.json` are git-ignored so client data never ends
+up in the repository. Use fictional clients for practice.

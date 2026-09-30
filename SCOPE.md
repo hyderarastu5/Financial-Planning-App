@@ -6,7 +6,7 @@ treatment per account type and live market data for investments.
 
 Built as a practice alternative to Zola, for personal use, and as a portfolio project.
 
-Status: **draft — not final.** Edit freely.
+Status: all five phases built. Edit freely as the plan grows.
 
 ---
 
@@ -84,20 +84,20 @@ Status: **draft — not final.** Edit freely.
 - Goals as cash flows, with contributions' start/stop years
 - RMDs, early-withdrawal penalties
 
-**Phase 3 — live market data** ✅ engine and API done · screens pending (UI phase)
+**Phase 3 — live market data** ✅ done
 - Holdings by ticker via `yfinance`: current prices, history, fund data
 - Historical returns to suggest expected growth rates
 - Asset allocation breakdown
 - Caching so repeated lookups don't hit Yahoo each time
 - Monte Carlo simulation using each fund's historical volatility: probability the plan succeeds and each goal is funded (e.g. "College: 87% likely")
 
-**Phase 4 — advanced** ✅ engine and API done · screens pending (UI phase)
+**Phase 4 — advanced** ✅ done
 - State taxes, mortgage/financing calculator, debts, inheritance
 - Roth vs. Traditional comparison and Roth conversions (fixed amount or fill a tax bracket)
 
-**Phase 5 — UI** (look and layout chosen by the user once features are done)
+**Phase 5 — UI** ✅ done (navy-and-gold advisor look, light and dark themes)
 - Screens for holdings and allocation, Monte Carlo results, debts, inflows, conversions and comparisons
-- Printable/PDF client report
+- Printable/PDF client report (Download report → Save as PDF)
 - Optional password-protected (encrypted) client files
 
 ## Data & privacy

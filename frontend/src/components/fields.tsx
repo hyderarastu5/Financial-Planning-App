@@ -16,10 +16,11 @@ interface NumberFieldProps {
   optional?: boolean // empty input means null instead of 0
   placeholder?: string
   hint?: string
+  wide?: boolean
 }
 
 // Keeps the raw text while typing so partial input like "7." or "" is not clobbered.
-export function NumberField({ label, value, onChange, unit = 'plain', optional, placeholder, hint }: NumberFieldProps) {
+export function NumberField({ label, value, onChange, unit = 'plain', optional, placeholder, hint, wide }: NumberFieldProps) {
   // null while not editing: show the formatted value instead.
   const [text, setText] = useState<string | null>(null)
 
@@ -32,7 +33,7 @@ export function NumberField({ label, value, onChange, unit = 'plain', optional, 
   }
 
   return (
-    <label className="field">
+    <label className={`field${wide ? ' span-2' : ''}`}>
       <span className="field-label">{label}</span>
       <span className={`input-wrap unit-${unit}`}>
         <input
@@ -53,15 +54,17 @@ interface TextFieldProps {
   label: string
   value: string
   onChange: (value: string) => void
-  type?: 'text' | 'date'
+  type?: 'text' | 'date' | 'password'
+  wide?: boolean
+  autoFocus?: boolean
 }
 
-export function TextField({ label, value, onChange, type = 'text' }: TextFieldProps) {
+export function TextField({ label, value, onChange, type = 'text', wide, autoFocus }: TextFieldProps) {
   return (
-    <label className="field">
+    <label className={`field${wide ? ' span-2' : ''}`}>
       <span className="field-label">{label}</span>
       <span className="input-wrap">
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} />
+        <input type={type} value={value} autoFocus={autoFocus} onChange={(e) => onChange(e.target.value)} />
       </span>
     </label>
   )
@@ -72,11 +75,12 @@ interface SelectFieldProps<T extends string> {
   value: T
   options: Record<T, string>
   onChange: (value: T) => void
+  wide?: boolean
 }
 
-export function SelectField<T extends string>({ label, value, options, onChange }: SelectFieldProps<T>) {
+export function SelectField<T extends string>({ label, value, options, onChange, wide }: SelectFieldProps<T>) {
   return (
-    <label className="field">
+    <label className={`field${wide ? ' span-2' : ''}`}>
       <span className="field-label">{label}</span>
       <span className="input-wrap">
         <select value={value} onChange={(e) => onChange(e.target.value as T)}>
@@ -97,5 +101,15 @@ export function CheckboxField({ label, checked, onChange }: { label: string; che
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>{label}</span>
     </label>
+  )
+}
+
+export function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" className="btn-icon" aria-label={label} onClick={onClick}>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path d="M3 3l10 10M13 3L3 13" />
+      </svg>
+    </button>
   )
 }

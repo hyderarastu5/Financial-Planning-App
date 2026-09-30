@@ -10,6 +10,11 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   hsa: 'HSA',
 }
 
+export interface Holding {
+  ticker: string
+  shares: number
+}
+
 export interface Account {
   id: string
   name: string
@@ -20,6 +25,8 @@ export interface Account {
   contribution_stop_year: number | null
   expected_return: number
   cost_basis: number | null
+  volatility: number | null
+  holdings: Holding[]
 }
 
 export type IncomeKind = 'social_security' | 'pension' | 'annuity' | 'business' | 'rental' | 'other'
@@ -65,13 +72,65 @@ export const GOAL_CATEGORY_LABELS: Record<GoalCategory, string> = {
   other: 'Other',
 }
 
+export interface Financing {
+  down_payment_share: number
+  rate: number
+  years: number
+}
+
 export interface Goal {
   id: string
   name: string
   category: GoalCategory
-  annual_amount: number // today's dollars, per year
+  annual_amount: number // today's dollars, per year (the price, for a financed goal)
   start_year: number
   years: number
+  financing: Financing | null
+}
+
+export type DebtKind = 'mortgage' | 'auto' | 'student' | 'credit_card' | 'other'
+
+export const DEBT_KIND_LABELS: Record<DebtKind, string> = {
+  mortgage: 'Mortgage',
+  auto: 'Auto loan',
+  student: 'Student loan',
+  credit_card: 'Credit card',
+  other: 'Other',
+}
+
+export interface Debt {
+  id: string
+  name: string
+  kind: DebtKind
+  balance: number
+  rate: number
+  annual_payment: number
+}
+
+export type InflowKind = 'inheritance' | 'home_sale' | 'gift' | 'other'
+
+export const INFLOW_KIND_LABELS: Record<InflowKind, string> = {
+  inheritance: 'Inheritance',
+  home_sale: 'Home sale',
+  gift: 'Gift',
+  other: 'Other',
+}
+
+export interface Inflow {
+  id: string
+  name: string
+  kind: InflowKind
+  amount: number // today's dollars
+  year: number
+  account_id: string | null
+}
+
+export interface RothConversion {
+  start_year: number
+  end_year: number
+  mode: 'fixed' | 'fill_bracket'
+  annual_amount: number
+  bracket_rate: number
 }
 
 export type FilingStatus = 'single' | 'married_joint'
@@ -97,11 +156,10 @@ export interface Plan {
   accounts: Account[]
   income_streams: IncomeStream[]
   goals: Goal[]
-  // Set by the backend's newer features; no editing screens yet (see planFile.ts).
-  debts?: unknown[]
-  inflows?: unknown[]
-  surplus_account_id?: string | null
-  roth_conversion?: unknown
+  debts: Debt[]
+  inflows: Inflow[]
+  surplus_account_id: string | null
+  roth_conversion: RothConversion | null
 }
 
 export interface YearRow {
@@ -120,11 +178,18 @@ export interface YearRow {
   income_tax: number
   payroll_tax: number
   penalties: number
+  state_tax: number
+  debt_payments: number
+  inflows: number
+  roth_conversion: number
   shortfall: number
   surplus: number
   balances: Record<string, number>
   total: number
   total_today_dollars: number
+  debt: number
+  property: number
+  net_worth: number
 }
 
 export interface Projection {
@@ -136,7 +201,67 @@ export interface Projection {
     final_balance: number
     depletion_age: number | null
     lifetime_taxes: number
+    lifetime_taxes_today_dollars: number
     goals: { id: string; name: string; total_cost: number; funded_share: number }[]
+    debts: { id: string; name: string; payoff_age: number | null }[]
+    state: string | null
   }
   years: YearRow[]
+}
+
+export interface Simulation {
+  runs: number
+  success_probability: number
+  goals: { id: string; name: string; probability: number }[]
+  bands: { age: number; p10: number; p25: number; p50: number; p75: number; p90: number }[]
+}
+
+export interface ScenarioResult {
+  name: string
+  lifetime_taxes: number
+  lifetime_taxes_today_dollars: number
+  balance_at_retirement_today_dollars: number
+  final_net_worth_today_dollars: number
+  after_tax_final_today_dollars: number
+  depletion_age: number | null
+}
+
+export type ComparisonKind = 'contribution_type' | 'roth_conversion'
+
+export interface Comparison {
+  kind: ComparisonKind
+  scenarios: ScenarioResult[]
+  better: string
+  difference_today_dollars: number
+}
+
+export interface HoldingAnalysis {
+  ticker: string
+  name: string
+  kind: string
+  shares: number
+  price: number
+  value: number
+  weight: number
+  annual_return: number | null
+  volatility: number | null
+  years_of_data: number | null
+  asset_classes: Record<string, number>
+  error: string | null
+}
+
+export interface AccountAnalysis {
+  value: number
+  holdings: HoldingAnalysis[]
+  annual_return: number | null
+  volatility: number | null
+  years_of_data: number | null
+  asset_classes: Record<string, number>
+  sectors: Record<string, number>
+}
+
+export interface StateOption {
+  code: string
+  name: string
+  income_tax: boolean
 }

@@ -3,7 +3,7 @@ from typing import List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from . import market_data
+from . import market_data, states
 from .compare import Comparison, ComparisonKind, compare
 from .engine import project
 from .holdings import analyze_account
@@ -16,6 +16,14 @@ app = FastAPI(title="Financial Planning App")
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True}
+
+
+@app.get("/api/states")
+def list_states() -> list:
+    """Every state and DC, for the residence picker."""
+    rows = [{"code": code, "name": rules.name, "income_tax": True} for code, rules in states.STATES.items()]
+    rows += [{"code": code, "name": name, "income_tax": False} for code, name in states.NO_TAX.items()]
+    return sorted(rows, key=lambda r: r["name"])
 
 
 @app.post("/api/project", response_model=Projection)

@@ -73,3 +73,11 @@ def test_amounts_are_indexed_for_inflation():
     later = states.state_income_tax(rules, "single", 1.1, age=40, wages=50_000, other=0, retirement=0, gains=0,
                                     taxable_social_security=0)
     assert later == pytest.approx(base - 0.0399 * 12_750 * 0.1)
+
+
+def test_states_endpoint():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    rows = TestClient(app).get("/api/states").json()
+    assert len(rows) == 51
+    assert {"code": "TX", "name": "Texas", "income_tax": False} in rows
