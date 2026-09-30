@@ -97,6 +97,11 @@ export interface Plan {
   accounts: Account[]
   income_streams: IncomeStream[]
   goals: Goal[]
+  // Set by the backend's newer features; no editing screens yet (see planFile.ts).
+  debts?: unknown[]
+  inflows?: unknown[]
+  surplus_account_id?: string | null
+  roth_conversion?: unknown
 }
 
 export interface YearRow {

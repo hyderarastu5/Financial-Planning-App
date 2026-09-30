@@ -6,7 +6,7 @@ plan's inflation rate; amounts that the law does not index (Social Security
 taxation thresholds, NIIT thresholds, the senior deduction phase-out) stay
 fixed.
 
-Not modeled: state tax, AMT, itemized deductions, credits, self-employment
+State tax is in states.py. Not modeled: AMT, itemized deductions, credits, self-employment
 tax, the Roth 5-year rule.
 """
 
@@ -135,6 +135,13 @@ class TaxYear:
         at_20 = max(0.0, end - max(start, fifteen_top))
         return 0.15 * at_15 + 0.20 * at_20
 
+    def bracket_top(self, rate: float) -> float:
+        """Taxable income at which the given ordinary rate ends (e.g. 0.12 -> top of the 12% bracket)."""
+        for upper, r in self.brackets():
+            if abs(r - rate) < 1e-9:
+                return upper
+        raise ValueError(f"no {rate:.0%} bracket")
+
     def payroll_tax(self, wages: float) -> float:
         ss = SOCIAL_SECURITY_RATE * min(wages, SOCIAL_SECURITY_WAGE_BASE * self.index)
         medicare = MEDICARE_RATE * wages
@@ -155,6 +162,28 @@ def taxable_social_security(benefits: float, other_income: float, status: str) -
     return min(0.85 * (provisional - base2) + min(0.5 * (base2 - base1), 0.5 * benefits), 0.85 * benefits)
 
 
+@dataclass(frozen=True)
+class TaxableIncome:
+    agi: float
+    social_security_taxable: float
+    ordinary_taxable: float  # taxable income taxed at ordinary rates
+    gains_taxable: float  # taxable income taxed at capital gains rates
+    # Ordinary income (incl. taxable Social Security) minus the deduction; negative when the
+    # deduction isn't used up. Room left in a bracket is bracket_top minus this.
+    ordinary_after_deduction: float
+
+
+def taxable_income(tax_year: TaxYear, *, ordinary: float, gains: float, social_security: float,
+                   age: int) -> TaxableIncome:
+    ss_taxable = taxable_social_security(social_security, ordinary + gains, tax_year.status)
+    agi = ordinary + gains + ss_taxable
+    deduction = tax_year.deduction(age, agi)
+    taxable = max(0.0, agi - deduction)
+    gains_taxable = min(gains, taxable)  # the deduction offsets ordinary income first
+    return TaxableIncome(agi, ss_taxable, taxable - gains_taxable, gains_taxable,
+                         ordinary + ss_taxable - deduction)
+
+
 def income_tax(tax_year: TaxYear, *, ordinary: float, gains: float, social_security: float, age: int) -> float:
     """Federal income tax.
 
@@ -162,11 +191,7 @@ def income_tax(tax_year: TaxYear, *, ordinary: float, gains: float, social_secur
     gains: long-term capital gains realized.
     social_security: gross benefits; the taxable share is computed here.
     """
-    ss_taxable = taxable_social_security(social_security, ordinary + gains, tax_year.status)
-    agi = ordinary + gains + ss_taxable
-    taxable = max(0.0, agi - tax_year.deduction(age, agi))
-    gains_taxable = min(gains, taxable)  # the deduction offsets ordinary income first
-    ordinary_taxable = taxable - gains_taxable
-    tax = tax_year.ordinary_tax(ordinary_taxable) + tax_year.ltcg_tax(ordinary_taxable, gains_taxable)
-    tax += NIIT_RATE * max(0.0, min(gains, agi - NIIT_THRESHOLD[tax_year.status]))
+    t = taxable_income(tax_year, ordinary=ordinary, gains=gains, social_security=social_security, age=age)
+    tax = tax_year.ordinary_tax(t.ordinary_taxable) + tax_year.ltcg_tax(t.ordinary_taxable, t.gains_taxable)
+    tax += NIIT_RATE * max(0.0, min(gains, t.agi - NIIT_THRESHOLD[tax_year.status]))
     return tax

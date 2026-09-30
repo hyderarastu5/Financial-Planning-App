@@ -2,8 +2,10 @@
 
 import type { Account, Goal, IncomeStream, Plan } from './types'
 
-// 2: filing status, healthcare, cost basis, income streams, goals
-export const PLAN_FILE_VERSION = 2
+// 2: filing status, healthcare, cost basis, income streams, goals. 3: holdings, volatility.
+// 4: debts, goal financing, one-time inflows, surplus account, Roth conversions.
+// Fields from versions 3-4 have no editing screens yet; they're kept as-is when a file is opened and saved.
+export const PLAN_FILE_VERSION = 4
 
 export function samplePlan(): Plan {
   return {

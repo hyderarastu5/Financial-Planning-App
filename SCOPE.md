@@ -84,16 +84,19 @@ Status: **draft — not final.** Edit freely.
 - Goals as cash flows, with contributions' start/stop years
 - RMDs, early-withdrawal penalties
 
-**Phase 3 — live market data**
+**Phase 3 — live market data** ✅ engine and API done · screens pending (UI phase)
 - Holdings by ticker via `yfinance`: current prices, history, fund data
 - Historical returns to suggest expected growth rates
 - Asset allocation breakdown
 - Caching so repeated lookups don't hit Yahoo each time
 - Monte Carlo simulation using each fund's historical volatility: probability the plan succeeds and each goal is funded (e.g. "College: 87% likely")
 
-**Phase 4 — advanced**
+**Phase 4 — advanced** ✅ engine and API done · screens pending (UI phase)
 - State taxes, mortgage/financing calculator, debts, inheritance
-- Roth vs. Traditional comparison, Roth conversions
+- Roth vs. Traditional comparison and Roth conversions (fixed amount or fill a tax bracket)
+
+**Phase 5 — UI** (look and layout chosen by the user once features are done)
+- Screens for holdings and allocation, Monte Carlo results, debts, inflows, conversions and comparisons
 - Printable/PDF client report
 - Optional password-protected (encrypted) client files
 
